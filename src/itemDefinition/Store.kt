@@ -11,6 +11,26 @@ import java.nio.channels.FileChannel
  * All the logic to load the Item Definitions from the specified file.
  */
 
+private var isInitialized: Boolean = false
+
+/**
+ * Just give the path to this guy and he'll take care of the loading for you
+ */
+var itemDefinitionPath: String = ""
+    set(value) {
+        if (isInitialized) return
+        field = value
+        itemDefinitionList = loadStore(value)
+    }
+
+var itemDefinitionList: ItemDefList = ItemDefList(listOf())
+    set(value) {
+        if (!isInitialized){
+            field = value
+            isInitialized = true
+        }
+    }
+
 /**
  * These extensions to [ByteBuffer] make [loadItemDef] code a more readable
  */
@@ -102,10 +122,3 @@ private fun loadStore(pathString: String): ItemDefList {
     repeat(itemDefLen) { itemDefs.add(loadItemDef(buffer)) }
     return ItemDefList(itemDefs)
 }
-
-private var isInitialized: Boolean = false
-
-var itemDefinitionPath: String = ""
-    set(value) { itemDefinitionList = loadStore(value) }
-
-var itemDefinitionList: ItemDefList = ItemDefList(listOf())
