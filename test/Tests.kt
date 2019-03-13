@@ -8,7 +8,7 @@ import nbness.Item.itemDefinition.itemDefinitionPath
  * Tests for [Container]s Safe Access
  */
 fun main() {
-    itemDefinitionPath = "src/test/resources/ItemDefinitions.idf"
+    itemDefinitionPath = "src/ItemDefinitions.idf"
     // No tests for get and set specifically because they will propagate through some of these tests and make them wrong.
     shiftTest()
     addItemTest()
