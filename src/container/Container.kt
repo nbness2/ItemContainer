@@ -12,17 +12,17 @@ import nbness.Item.*
  * Provides both safe and dangerous ways of operating on this.
  */
 class Container(
+    /** @property size */
     @JvmField val size: Int,
+    /** @property alwaysStackable */
     @JvmField val alwaysStackable: Boolean = false,
+    /** @param[initList] Initializes the [Container] with [initList]*/
     initList: List<BaseItem> = emptyList())
 {
     constructor(alwaysStackable: Boolean, vararg items: BaseItem) : this(alwaysStackable, items.toList())
 
-    @JvmOverloads constructor(alwaysStackable: Boolean = false, initList: List<BaseItem>) :
+    constructor(alwaysStackable: Boolean = false, initList: List<BaseItem>) :
             this(size = initList.size, alwaysStackable = alwaysStackable, initList = initList)
-
-    fun withAlwaysStackable(newAlwaysStackable: Boolean): Container =
-        Container(size, newAlwaysStackable, internalItems.toList())
 
     private val internalItems: Array<BaseItem> =
         if (initList.isEmpty()) {
@@ -34,13 +34,20 @@ class Container(
             initList.toTypedArray()
         }
 
+    /**
+     * @property unsafe Lets you access operations in an "unsafe" manner
+     * @see [UnsafeAccess]
+     */
     @JvmField val unsafe: UnsafeAccess = UnsafeAccess(this, internalItems)
 
+    /**
+     * @param[alwaysStackable] Creates a new [Container] with the given [alwaysStackable] value
+     */
     @JvmOverloads fun copy(alwaysStackable: Boolean = false) =
         Container(alwaysStackable, internalItems.toList())
 
     /**
-     * Returns: Success.FindSlot or Failure.NoFreeSlots
+     * @return [Success.FindSlot] or [Failure.NoFreeSlots]
      */
     val firstFreeSlot: ContainerResult
         get() {
@@ -49,32 +56,50 @@ class Container(
             else Success.FindSlot(index)
         }
 
+    /**
+     * The amount of free slots (how many items resolve to true for [BaseItem.isInvalidItem]) this [Container] has
+     * @return [Int]
+     */
     val freeSlotAmount: Int
         get() = internalItems.count { it.isInvalidItem }
 
-    private val indexRange = 0 until size
 
     private fun Int.orOnInvalid(other: Int): Int = if (this < 0) other else this
 
+    /**
+     * Checks if the given item shares an item id with any other item in this [Container]
+     *
+     * @param[item] The [BaseItem] you are checking is contained in [internalItems]
+     *
+     * @return [Boolean]
+     */
     operator fun contains(item: BaseItem): Boolean = internalItems.any { it.sharesItemIdWith(item) }
 
     /**
-     * Returns: Success.GetItem or Failure.BadIndex
+     * Gets a [ContainerResult] for the given [slotIndex]
+     *
+     * @param[slotIndex] The index of the slot you are attempting to get from
+     *
+     * @return [Success.GetItem] or [Failure.BadIndex]
      */
     operator fun get(slotIndex: Int): ContainerResult {
-        return if (isValidSlot(slotIndex)) Success.GetItem(unsafe[slotIndex])
-        else Failure.BadIndex(slotIndex)
+        return if (isValidSlot(slotIndex))
+            Success.GetItem(unsafe[slotIndex])
+        else
+            Failure.BadIndex(slotIndex)
     }
 
     /**
-     * Returns: Success.SetItem, Failure.BadIndex or Failure.SlotOccupied
+     * Attempts to set a [slotIndex] to [itemToSet]
+     *
+     * @param[slotIndex] The index of the slot you are attempting to set to
+     * @param[itemToSet] the [BaseItem] you are attempting to put in slot [slotIndex]
+     *
+     * @return [Success.SetItem], [Failure.BadIndex] or [Failure.SlotOccupied]
      */
     operator fun set(slotIndex: Int, itemToSet: BaseItem): ContainerResult = this[slotIndex, itemToSet]
 
-    /**
-     * Actually a set, but allows you to get a result from it. Assignment set (Container[slotIndex] = BaseItem) doesn't allow you to capture a return value.
-     * Usage: val setResult = Container[slotIndex, BaseItem]
-     */
+    /** @see [Container.set] */
     operator fun get(slotIndex: Int, itemToSet: BaseItem): ContainerResult =
         if (isValidSlot(slotIndex)) {
             if (slotIsOccupied(slotIndex)) {
@@ -88,7 +113,13 @@ class Container(
         }
 
     /**
-     * Returns: Success.VerifyItem, Failure.BadIndex or Failure.ItemIdMismatch
+     * Verifies that [itemToVerify] has the same itemId as the [BaseItem] in [slotIndex] meets [verificationCondition]
+     *
+     * @param[itemToVerify] The item you are verifying meets the conditions
+     * @param[slotIndex] The index of the [BaseItem] you are comparing [itemToVerify] to
+     * @param [verificationCondition] The condition that [itemToVerify] must meet.
+     *
+     * @return [Success.VerifyItem], [Failure.BadIndex] or [Failure.ItemIdMismatch]
      */
     inline fun verify(itemToVerify: BaseItem, slotIndex: Int, verificationCondition: (comparedItem: BaseItem) -> Boolean): ContainerResult =
         this[slotIndex]
@@ -101,31 +132,91 @@ class Container(
             }
 
     /**
-     * Returns: Success.VerifyItem, Failure.BadIndex, Failure.ItemIdMismatch or Failure.NotExactItemAmount
+     * Verifies that there are exactly [itemToVerify.itemAmount] of [itemToVerify.itemId] in [internalItems] slot [slotIndex]
+     *
+     * @param[itemToVerify] The item that you are comparing the item in [internalItems] to
+     * @param[slotIndex] The slot index of [internalItems] you are comparing to [itemToVerify]
+     *
+     * @return [Success.VerifyItem], [Failure.BadIndex], [Failure.ItemIdMismatch] or [Failure.NotExactItemAmount]
      */
     fun verifyExact(itemToVerify: BaseItem, slotIndex: Int): ContainerResult =
         verify(itemToVerify, slotIndex) {
-            if (!it.sharesItemIdWith(itemToVerify)) return@verify false
-            if (it.itemAmount != itemToVerify.itemAmount) return Failure.NotExactItemAmount
-            true }
+            if (!it.sharesItemIdWith(itemToVerify)) {
+                return@verify false
+            }
+            if (it.itemAmount != itemToVerify.itemAmount) {
+                return Failure.NotExactItemAmount
+            }
+            return@verify true
+        }
 
     /**
-     * Returns: Success.VerifyItem, Failure.BadIndex, Failure.ItemIdMismatch or Failure.NotEnoughItemAmount
+     * Verifies that there is at least [itemToVerify.itemAmount] of [itemToVerify.itemId] in [internalItems] slot [slotIndex]
+     *
+     * @param[itemToVerify] The item that you are comparing the item in [internalItems] to
+     * @param[slotIndex] The slot index of [internalItems] you are comparing to [itemToVerify]
+     *
+     * @return [Success.VerifyItem], [Failure.BadIndex], [Failure.ItemIdMismatch] or [Failure.NotEnoughItemAmount]
      */
     fun verifyAtLeast(itemToVerify: BaseItem, slotIndex: Int): ContainerResult =
         verify(itemToVerify, slotIndex) {
-            if (!it.sharesItemIdWith(itemToVerify)) return@verify false
-            if (it.itemAmount < itemToVerify.itemAmount) return Failure.NotEnoughItemAmount
-            true }
+            if (!it.sharesItemIdWith(itemToVerify)) {
+                return@verify false
+            }
+            if (it.itemAmount < itemToVerify.itemAmount) {
+                return Failure.NotEnoughItemAmount
+            }
+            return@verify true
+        }
 
+    /**
+     * Verifies that there is at least 1 of [itemToVerify.itemId] in [internalItems] slot [slotIndex]
+     *
+     * @param[itemToVerify] The item you are comparing the item in [internalItems] to
+     * @param[slotIndex] The slot index of [internalItems] you are comparing to [itemToVerify]
+     *
+     * @return [Success.VerifyItem], [Failure.BadIndex], [Failure.ItemIdMismatch] or [Failure.NotEnoughItemAmount]
+     */
     fun verifyOne(itemToVerify: BaseItem, slotIndex: Int): ContainerResult =
         verify(itemToVerify, slotIndex) { it.sharesItemIdWith(itemToVerify) }
 
+    /**
+     * Check if the slot [slotIndex] is occupied
+     *
+     * @param[slotIndex] The index of the slot you are checking is occupied
+     *
+     * @return [Boolean]
+     */
     fun slotIsOccupied(slotIndex: Int): Boolean = internalItems[slotIndex].isValidItem
-    fun isValidSlot(slotIndex: Int): Boolean = slotIndex in indexRange
+
+    /**
+     * Checks if the given [slotIndex] is valid
+     *
+     * @param[slotIndex] The index of the sot you are checking is valid
+     *
+     * @return [Boolean]
+     */
+    fun isValidSlot(slotIndex: Int): Boolean = slotIndex in internalItems.indices
+
+    /**
+     * Checks if the [Container] is full
+     *
+     * @return [Boolean]
+     */
     fun containerIsFull(): Boolean = firstFreeSlot is Failure.NoFreeSlots
+
+    /**
+     * Checks if the [Container] has any space
+     *
+     * @return [Boolean]
+     */
     fun containerHasSpace(): Boolean = firstFreeSlot is Success.FindSlot
 
+    /**
+     * Checks if the [Container] has space for [item]. Takes in to account [alwaysStackable] and if [item] is stackable or not.
+     *
+     * @return [Boolean]
+     */
     fun hasRoomFor(item: BaseItem): Boolean {
         val maxAddAmount: Int = if (alwaysStackable || item.isStackable) {
             if (item in this) {
@@ -141,24 +232,48 @@ class Container(
     }
 
     /**
-     * Returns: Success.FindSlot, Failure.ItemNotfound or Failure.NotEnoughItemAmount
+     * Finds the slot index for at least [itemToFind.itemAmount] [itemToFind]
+     *
+     * @param[itemToFind] The [BaseItem] to find the slot for.
+     *
+     * @return [Success.FindSlot], [Failure.ItemNotFound] or [Failure.NotEnoughItemAmount]
      */
-    fun findSlotForAtLeast(itemToVerify: BaseItem): ContainerResult {
-        val foundSlot = internalItems.indexOfFirst { itemToVerify.sharesItemIdWith(it) }
+    fun findSlotForAtLeast(itemToFind: BaseItem): ContainerResult {
+        val foundSlot = internalItems.indexOfFirst { itemToFind.sharesItemIdWith(it) }
         return this[foundSlot]
-            .onFailure { return Failure.ItemNotFound(itemToVerify) }
+            .onFailure { return Failure.ItemNotFound(itemToFind) }
             .onSuccessType<Success.GetItem> {
                 containedItem
-                    .hasAtLeast(itemToVerify.itemAmount)
+                    .hasAtLeast(itemToFind.itemAmount)
                     .onFalse { return Failure.NotEnoughItemAmount }
-                    .otherwise { Success.FindSlot(foundSlot) } }
+                    .otherwise { Success.FindSlot(foundSlot) }
+            }
     }
 
+    /**
+     * Finds the slot index for [itemIdToFind]
+     *
+     * @param[itemIdToFind] The item id to find the slot for.
+     *
+     * @return [Success.FindSlot] or [Failure.ItemNotFound]
+     */
     fun findSlotForId(itemIdToFind: Number): ContainerResult = findSlotForAtLeast(Item(itemIdToFind.toShort(), 1))
+
+    /**
+     * Finds the slot index for at least 1 [itemToFind]
+     *
+     * @param[itemToFind] The [BaseItem] to find the slot for.
+     *
+     * @return [Success.FindSlot] or [Failure.ItemNotFound]
+     */
     fun findSlotForItem(itemToFind: BaseItem): ContainerResult = findSlotForAtLeast(Item(itemToFind.itemId))
 
     /**
-     * Returns: Success.FullTakeItem or Failure.BadIndex
+     * Takes the item from slot [slotIndex] and sets [slotIndex] to [INVALID_ITEM]
+     *
+     * @param[slotIndex] The index to take the item from.
+     *
+     * @return [Success.FullTakeItem] or [Failure.BadIndex]
      */
     fun takeFromSlot(slotIndex: Int): ContainerResult =
         this[slotIndex]
@@ -167,7 +282,14 @@ class Container(
                 return Success.FullTakeItem(containedItem) }
 
     /**
-     * Returns: Success.FullTakeItem, Success.PartialTakeItem or Failure.BadIndex
+     * Attempts to take all of [itemToTake] from [slotIndex] and sets [slotIndex] to [INVALID_ITEM].
+     * Will only ever take a maximum of [itemToTake.itemAmount].
+     * Will return a smaller amount but still take if the itemId in [slotIndex] matches [itemToTake.itemId]
+     *
+     * @param[slotIndex] The index to attempt take the item from.
+     * @param[itemToTake] The item
+     *
+     * @return [Success.FullTakeItem], [Success.PartialTakeItem] or [Failure.BadIndex]
      */
     fun takeFromSlot(slotIndex: Int, itemToTake: BaseItem): ContainerResult =
         verifyAtLeast(itemToTake, slotIndex)
@@ -182,7 +304,12 @@ class Container(
                         return Success.PartialTakeItem(containedItem, itemToTake - containedItem) } }
 
     /**
-     * Returns: Success.SwapItem, Failure.BadFromIndex, Failure.BadToIndex or Failure.SameToFromIndex
+     * Attempts to swap the slot contents of [fromSlot] and [toSlot]
+     *
+     * @param[fromSlot] One of the slots in which the content is getting swapped.
+     * @param[toSlot] One of the slots in which the content is getting swapped.
+     *
+     * @return [Success.SwapItem], [Failure.BadFromIndex], [Failure.BadToIndex] or [Failure.SameToFromIndex]
      */
     fun swapSlotContents(fromSlot: Int, toSlot: Int): ContainerResult {
         if (!isValidSlot(fromSlot)) return Failure.BadFromIndex(fromSlot)
@@ -195,12 +322,17 @@ class Container(
                     .onSuccessType<Success.FullTakeItem> {
                         this@Container[fromSlot] = containedItem
                         internalItems[toSlot] = temp
-                        return Success.SwapItem }
+                        return Success.SwapItem
+                    }
             }
     }
 
     /**
-     * Returns: Success.FullAddItem, Success.PartialAddItem, Failure.AddBadIndex, Failure.ContainerFull, Failure.AddSlotOccupied or Failure.InvalidItemAddition
+     * Attempts to add [itemToAdd] to the slot [slotIndex].
+     * Will either place it in the specified slot or the first [itemToAdd.itemAmount] slots it can find.
+     * Will add as much as it can, if it cannot add all it will return [Success.PartialAddItem] with the remaining items in [Success.PartialAddItem.leftoverItem]
+     *
+     * @return [Success.FullAddItem], [Success.PartialAddItem], [Failure.AddBadIndex], [Failure.ContainerFull], [Failure.AddSlotOccupied] or [Failure.InvalidItemAddition]
      */
     fun addItem(itemToAdd: BaseItem, slotIndex: Int): ContainerResult {
         if (itemToAdd !in this && !itemToAdd.isStackable) {
@@ -237,10 +369,22 @@ class Container(
         return Success.FullAddItem
     }
 
+    /**
+     * Will attempt to add [itemToAdd] in the first available slot.
+     * @see [addItem]
+     * @return [Success.FullAddItem], [Success.PartialAddItem], [Failure.AddBadIndex], [Failure.ContainerFull], [Failure.AddSlotOccupied] or [Failure.InvalidItemAddition]
+     */
+
     fun addItem(itemToAdd: BaseItem): ContainerResult = firstFreeSlot
         .onSuccessType<Success.FindSlot>{ return addItem(itemToAdd, index) }
         .onFailure { return addItem(itemToAdd, -1) }
 
+    /**
+     * Shifts all items "left" or "right" depending on [shiftLeft] in a memory friendly way.
+     * [memoryFriendlyShift] uses less memory than [fastShift] but performs worse on average on [Container] over 128 items.
+     *
+     * @param[shiftLeft] Shifting the items left(true) or right(false)
+     */
     fun memoryFriendlyShift(shiftLeft: Boolean = true) {
         var nextSlotToFill = -1
         val defaultCurrentSlotValue = if (shiftLeft) 0 else size - 1
@@ -265,6 +409,12 @@ class Container(
         }
     }
 
+    /**
+     * Shifts all items "left" or "right" depending on [shiftLeft] in a fast way.
+     * [fastShift] uses more memory than [memoryFriendlyShift] but performs better on average on [Container] over 128 items.
+     *
+     * @param[shiftLeft] Shifting the items left(true) or right(false)
+     */
     fun fastShift(shiftLeft: Boolean = true) {
         internalItems
             .partitionJoin(shiftLeft) { it.isValidItem }
@@ -312,6 +462,13 @@ class Container(
             .forEachIndexed { index, item -> internalItems[index] = item }
     }
 
+    /**
+     * Checks if the contents of this [Container] and [other] are equal if [other] is a [Container]
+     *
+     * @param[other] The other object to check equality with.
+     *
+     * @return [Boolean]
+     */
     override operator fun equals(other: Any?): Boolean {
         return when (other) {
             is Container -> internalItems.contentEquals(other.internalItems)
