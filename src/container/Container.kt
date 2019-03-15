@@ -9,20 +9,20 @@ import nbness.Item.*
  * @author: nbness2 <nbness1337@gmail.com>
  *
  * Mutable container of Immutable items.
- * Provides both safe and dangerous ways of operating on this.
+ * Provides both safe and unsafe ways of operating on this.
  */
 class Container(
     /** @property size */
     @JvmField val size: Int,
     /** @property alwaysStackable */
-    @JvmField val alwaysStackable: Boolean = false,
+    @JvmField val alwaysStackable: Boolean,
     /** @param[initList] Initializes the [Container] with [initList]*/
-    initList: List<BaseItem> = emptyList())
-{
-    constructor(alwaysStackable: Boolean, vararg items: BaseItem) : this(alwaysStackable, items.toList())
+    initList: Array<BaseItem> = emptyArray()
+) {
 
-    constructor(alwaysStackable: Boolean = false, initList: List<BaseItem>) :
-            this(size = initList.size, alwaysStackable = alwaysStackable, initList = initList)
+    constructor(vararg items: BaseItem) : this(items.size, false, items as Array<BaseItem>)
+    constructor(alwaysStackable: Boolean, vararg items: BaseItem) : this(items.size, alwaysStackable, items as Array<BaseItem>)
+    constructor(size: Int, alwaysStackable: Boolean = false, init: (Int) -> BaseItem) : this(size, alwaysStackable, Array(size, init))
 
     private val internalItems: Array<BaseItem> =
         if (initList.isEmpty()) {
@@ -31,7 +31,7 @@ class Container(
             if (initList.size != size) {
                 throw Exception("initList size [${initList.size}] does not correspond with given size [$size]")
             }
-            initList.toTypedArray()
+            initList
         }
 
     /**
@@ -43,8 +43,7 @@ class Container(
     /**
      * @param[alwaysStackable] Creates a new [Container] with the given [alwaysStackable] value
      */
-    @JvmOverloads fun copy(alwaysStackable: Boolean = false) =
-        Container(alwaysStackable, internalItems.toList())
+    @JvmOverloads fun copy(alwaysStackable: Boolean = false) = Container(size, alwaysStackable, internalItems.copyOf())
 
     /**
      * @return [Success.FindSlot] or [Failure.NoFreeSlots]
@@ -52,8 +51,11 @@ class Container(
     val firstFreeSlot: ContainerResult
         get() {
             val index = internalItems.indexOfFirst { it.isInvalidItem }
-            return if (index < 0) Failure.NoFreeSlots
-            else Success.FindSlot(index)
+            return if (index < 0) {
+                Failure.NoFreeSlots
+            } else {
+                Success.FindSlot(index)
+            }
         }
 
     /**
@@ -335,12 +337,19 @@ class Container(
      * @return [Success.FullAddItem], [Success.PartialAddItem], [Failure.AddBadIndex], [Failure.ContainerFull], [Failure.AddSlotOccupied] or [Failure.InvalidItemAddition]
      */
     fun addItem(itemToAdd: BaseItem, slotIndex: Int): ContainerResult {
-        if (itemToAdd !in this && !itemToAdd.isStackable) {
-            if (containerIsFull()) return Failure.ContainerFull(itemToAdd)
-            if (!isValidSlot(slotIndex)) return Failure.AddBadIndex(slotIndex, itemToAdd)
-            if (itemToAdd.isInvalidItem) return Failure.InvalidItemAddition
-            if (slotIsOccupied(slotIndex)) return Failure.AddSlotOccupied(slotIndex, itemToAdd)
+        if (containerIsFull()) {
+            if (alwaysStackable) {
+                if (itemToAdd !in this) {
+                    return Failure.ContainerFull(itemToAdd)
+                }
+            } else {
+                if (!itemToAdd.isStackable) {
+                    return Failure.ContainerFull(itemToAdd)
+                }
+            }
         }
+
+        if (itemToAdd.isInvalidItem) return Failure.InvalidItemAddition
 
         val targetSlot =
             if (alwaysStackable || itemToAdd.isStackable) {
