@@ -22,11 +22,7 @@ fun verifyTest() {
             expectedGot(testName, verify1Expected, verify1)
         }
         assert(verify2 is ContainerResult.Failure.NotEnoughItemAmount) {
-            expectedGot(
-                testName,
-                ContainerResult.Failure.NotEnoughItemAmount,
-                verify2
-            )
+            expectedGot(testName, ContainerResult.Failure.NotEnoughItemAmount, verify2)
         }
         assert(verify3 is ContainerResult.Success.VerifyItem && verify3.containedItem == verify3Expected.containedItem) {
             expectedGot(testName, verify3Expected, verify3)

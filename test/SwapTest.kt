@@ -26,18 +26,10 @@ fun swapSlotTest() {
         val swap4Expected = ContainerResult.Failure.SameToFromIndex(1)
 
         assert(swap3 is ContainerResult.Failure.BadToIndex && swap3.index == swap3Expected.index) {
-            expectedGot(
-                testName,
-                swap3Expected,
-                swap3
-            )
+            expectedGot(testName, swap3Expected, swap3)
         }
         assert(swap4 is ContainerResult.Failure.SameToFromIndex && swap4.index == swap4Expected.index) {
-            expectedGot(
-                testName,
-                swap4Expected,
-                swap4
-            )
+            expectedGot(testName, swap4Expected, swap4)
         }
     }
     println("$testName passed")

@@ -338,12 +338,10 @@ class Container(
      */
     fun addItem(itemToAdd: BaseItem, slotIndex: Int): ContainerResult {
         if (containerIsFull()) {
-            if (alwaysStackable) {
-                if (itemToAdd !in this) {
-                    return Failure.ContainerFull(itemToAdd)
-                }
+            if (itemToAdd !in this) {
+                return Failure.ContainerFull(itemToAdd)
             } else {
-                if (!itemToAdd.isStackable) {
+                if (!alwaysStackable && !itemToAdd.isStackable) {
                     return Failure.ContainerFull(itemToAdd)
                 }
             }

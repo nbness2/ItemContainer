@@ -22,34 +22,27 @@ fun notAlwaysStackableTest() {
         val add3 = addItem(Item(2, 2))
         val add4 = addItem(Item(1))
         val add4Expected = ContainerResult.Failure.ContainerFull(Item(1))
+        /**
+         * This test was because a logical error allowed an IndexError to fall through.
+         * This exception arose when adding a stackable item to a full container that was not alwaysStackable that didnt contain any of that item.
+         */
+        val add5 = addItem(Item(4))
+        val add5Expected = ContainerResult.Failure.ContainerFull(Item(4))
 
         assert(add1 is ContainerResult.Success.FullAddItem) {
-            expectedGot(
-                testName,
-                ContainerResult.Success.FullAddItem,
-                add1
-            )
+            expectedGot(testName, ContainerResult.Success.FullAddItem, add1)
         }
         assert(add2 is ContainerResult.Success.PartialAddItem && add2.leftoverItem == add2Expected.leftoverItem) {
-            expectedGot(
-                testName,
-                add2Expected,
-                add2
-            )
+            expectedGot(testName, add2Expected, add2)
         }
         assert(add3 is ContainerResult.Success.FullAddItem) {
-            expectedGot(
-                testName,
-                ContainerResult.Success.FullAddItem,
-                add3
-            )
+            expectedGot(testName, ContainerResult.Success.FullAddItem, add3)
         }
         assert(add4 is ContainerResult.Failure.ContainerFull && add4.containedItem == add4Expected.containedItem) {
-            expectedGot(
-                testName,
-                add4Expected,
-                add4
-            )
+            expectedGot(testName, add4Expected, add4)
+        }
+        assert(add5 is ContainerResult.Failure.ContainerFull && add5.containedItem == add5Expected.containedItem) {
+            expectedGot(testName, add5Expected, add5)
         }
         assert(itemsBefore == expectedAfter) { "$testName failed" }
     }

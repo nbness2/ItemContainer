@@ -15,7 +15,7 @@ data class ItemDefinition (
  */
 class ItemDefinitionList(size: Int) {
     private val internalDefs = Array<ItemDefinition>(size) { ItemDefinition(it) }
-    operator fun get(index: Int) = if (index > -1) ItemDefinition(index) else INVALID_DEF
+    operator fun get(index: Int) = if (index > -1) internalDefs[index] else INVALID_DEF
 }
 
 val INVALID_DEF = ItemDefinition(-1, false)
