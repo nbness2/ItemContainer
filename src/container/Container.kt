@@ -259,7 +259,7 @@ class Container(
      *
      * @return [Success.FindSlot] or [Failure.ItemNotFound]
      */
-    fun findSlotForId(itemIdToFind: Number): ContainerResult = findSlotForAtLeast(Item(itemIdToFind.toShort(), 1))
+    fun findSlotForId(itemIdToFind: Int): ContainerResult = findSlotForAtLeast(Item(itemIdToFind, 1))
 
     /**
      * Finds the slot index for at least 1 [itemToFind]

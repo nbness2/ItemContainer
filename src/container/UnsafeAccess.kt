@@ -69,5 +69,5 @@ class UnsafeAccess(
     fun findSlotForAtLeast(itemToVerify: BaseItem): Int = internalItems
         .indexOfFirst { it.sharesItemIdWith(itemToVerify) && it.hasAtLeast(itemToVerify.itemAmount) }
 
-    fun findSlotForId(idToVerify: Number): Int = findSlotForAtLeast(Item(idToVerify.toShort(), 1))
+    fun findSlotForId(idToVerify: Int): Int = findSlotForAtLeast(Item(idToVerify, 1))
 }

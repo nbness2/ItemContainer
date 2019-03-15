@@ -7,7 +7,7 @@ package nbness.Item
  */
 interface BaseItem {
     /** @property itemId */
-    val itemId: Short
+    val itemId: Int
 
     /** @property itemAmount */
     val itemAmount: Int
@@ -38,7 +38,6 @@ interface BaseItem {
     /**
      * Copies this instance of [BaseItem]
      */
-    fun copy(): BaseItem
     override fun toString(): String
 
     /**
@@ -81,4 +80,4 @@ interface BaseItem {
     fun hasAtLeast(amount: Int): Boolean = itemAmount >= amount
 }
 
-fun BaseItem(itemId: Short, itemAmount: Int): BaseItem = if (itemId < 0) INVALID_ITEM else Item(itemId, itemAmount)
+fun BaseItem(itemId: Int, itemAmount: Int): BaseItem = if (itemId < 0) INVALID_ITEM else Item(itemId, itemAmount)
