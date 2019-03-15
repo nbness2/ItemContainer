@@ -66,9 +66,7 @@ fun alwaysStackableTest() {
         val add1 = addItem(Item(1, 3), 2)
         val add2 = addItem(Item(2, 1), 0)
         val add3 = addItem(Item(3, 5), 1)
-        println("b4: $itemsBefore")
         val add4 = addItem(Item(5))
-        println("a4: $itemsBefore")
         val add4Expected = ContainerResult.Failure.ContainerFull(Item(5))
 
         assert(add1 is ContainerResult.Success.FullAddItem) {
