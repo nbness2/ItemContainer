@@ -15,7 +15,11 @@ sealed class ContainerResult {
     internal interface ContainsLeftoverItem { val leftoverItem: BaseItem }
     internal interface ContainsFoundItem { val foundItem: BaseItem }
 
+    /**
+     * Signifies a successful [Container] operation
+     */
     sealed class Success : ContainerResult() {
+        override fun toString(): String = "Success.${this::class.simpleName}"
         class GetItem(override val containedItem: BaseItem) : Success(), ContainsItem
         object SetItem : Success()
         object FullAddItem : Success()
@@ -27,9 +31,11 @@ sealed class ContainerResult {
         class PartialTakeItem(override val containedItem: BaseItem, override val leftoverItem: BaseItem) : Success(), ContainsItem, ContainsLeftoverItem {
             override fun toString(): String = "Success.PartialTakeItem($containedItem, $leftoverItem)"
         }
-        override fun toString(): String = "Success.${this::class.simpleName}${if (this !is ContainsItem) "" else "($containedItem)"}"
     }
 
+    /**
+     * Signifies a failed [Container] operation
+     */
     sealed class Failure : ContainerResult() {
         override fun toString(): String = "Failure.${this::class.simpleName}"
         class BadIndex(override val index: Int) : Failure(), ContainsIndex

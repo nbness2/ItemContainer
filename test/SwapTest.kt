@@ -1,22 +1,22 @@
+import nbness.Container.Container
 import nbness.Container.ContainerResult
 import nbness.Item.INVALID_ITEM
 import nbness.Item.Item
 
 fun swapSlotTest() {
     val testName = "Swap item"
-    val itemsToVerify = listOf(Item(4151, 2), Item(4151, 4), INVALID_ITEM)
-        .toContainer()
+    val itemsToVerify = Container(Item(1, 2), Item(1, 4), INVALID_ITEM)
 
     with(itemsToVerify) {
 
         val swap1 = swapSlotContents(0, 2)
-        assert(swap1 is ContainerResult.Success.SwapItem && (unsafe[0] == INVALID_ITEM && unsafe[2] == Item(4151, 2))) {
+        assert(swap1 is ContainerResult.Success.SwapItem && (unsafe[0] == INVALID_ITEM && unsafe[2] == Item(1, 2))) {
             println(itemsToVerify)
             expectedGot(testName, ContainerResult.Success.SwapItem, swap1)
         }
 
         val swap2 = swapSlotContents(1, 2)
-        assert(swap2 is ContainerResult.Success.SwapItem && (unsafe[1] == Item(4151, 2) && unsafe[2] == Item(4151, 4))) {
+        assert(swap2 is ContainerResult.Success.SwapItem && (unsafe[1] == Item(1, 2) && unsafe[2] == Item(1, 4))) {
             expectedGot(testName, ContainerResult.Success.SwapItem, swap2)
         }
 

@@ -1,20 +1,21 @@
+import nbness.Container.Container
 import nbness.Container.ContainerResult
+import nbness.Item.INVALID_ITEM
 import nbness.Item.Item
 
 fun verifyTest() {
     val testName = "Verification"
-    val itemsToVerify = listOf(Item(4151), Item(1337, 5), Item(4153, 250))
-        .toContainer()
+    val itemsToVerify = Container(false, Item(1), Item(3, 5), Item(5, 250))
 
     with(itemsToVerify) {
-        val verify1 = verifyOne(Item(4151), 0)
-        val verify1Expected = ContainerResult.Success.VerifyItem(Item(4151))
-        val verify2 = verifyAtLeast(Item(4151, 2), 0)
-        val verify3 = verifyExact(Item(1337, 5), 1)
-        val verify3Expected = ContainerResult.Success.VerifyItem(Item(1337, 5))
-        val verify4 = verifyExact(Item(1234, 250), 2)
-        val verify4Expected = ContainerResult.Failure.ItemIdMismatch(Item(1234, 250), Item(4153, 250))
-        val verify5 = verify(Item(), 5) { it.isValidItem }
+        val verify1 = verifyOne(Item(1), 0)
+        val verify1Expected = ContainerResult.Success.VerifyItem(Item(1))
+        val verify2 = verifyAtLeast(Item(1, 2), 0)
+        val verify3 = verifyExact(Item(3, 5), 1)
+        val verify3Expected = ContainerResult.Success.VerifyItem(Item(3, 5))
+        val verify4 = verifyExact(Item(7, 250), 2)
+        val verify4Expected = ContainerResult.Failure.ItemIdMismatch(Item(7, 250), Item(5, 250))
+        val verify5 = verify(INVALID_ITEM, 5) { it.isValidItem }
         val verify5Expected = ContainerResult.Failure.BadIndex(5)
 
         assert(verify1 is ContainerResult.Success.VerifyItem && verify1.containedItem == verify1Expected.containedItem) {
