@@ -8,9 +8,12 @@ import kotlin.math.min
 /**
  * @author: nbness2 <nbness1337@gmail.com>
  *
- * The "unsafe" way to access [Container] operations
+ * The "unsafe" way to use [Container]
  */
-class UnsafeAccess(private val parent: Container, private val internalItems: Array<BaseItem>) {
+class UnsafeAccess(
+    private val parent: Container,
+    private val internalItems: Array<BaseItem>
+) {
 
     private fun Int.orOnInvalid(other: Int): Int = if (this < 0) other else this
 
