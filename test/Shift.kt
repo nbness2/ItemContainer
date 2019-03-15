@@ -5,23 +5,22 @@ import nbness.Item.Item
 
 fun shiftTest() {
     println("Shift tests")
-    val items = listOf(INVALID_ITEM, Item(4151, 1), INVALID_ITEM, INVALID_ITEM, Item(1337, 2), INVALID_ITEM)
-    val expected = listOf(Item(4151, 1), Item(1337, 2), INVALID_ITEM, INVALID_ITEM, INVALID_ITEM, INVALID_ITEM)
-        .toContainer()
+    val items = Container(INVALID_ITEM, Item(1, 1), INVALID_ITEM, INVALID_ITEM, Item(3, 2), INVALID_ITEM)
+    val expected = Container(Item(1, 1), Item(3, 2), INVALID_ITEM, INVALID_ITEM, INVALID_ITEM, INVALID_ITEM)
     fastShiftTest(items, expected)
     memShiftTest(items, expected)
 
 }
 
-fun fastShiftTest(items: List<BaseItem>, expected: Container) {
-    val itemsBefore = items.toContainer()
+fun fastShiftTest(items: Container, expected: Container) {
+    val itemsBefore = items.copy()
     itemsBefore.fastShift()
     assert(itemsBefore == expected) { "Fast shift failed" }
     println("\tFast shift passed")
 }
 
-fun memShiftTest(items: List<BaseItem>, expected: Container) {
-    val itemsBefore = items.toContainer()
+fun memShiftTest(items: Container, expected: Container) {
+    val itemsBefore = items.copy()
     itemsBefore.memoryFriendlyShift()
     assert(itemsBefore == expected) { "Memory friendly shift failed" }
     println("\tMemory friendly shift passed")
