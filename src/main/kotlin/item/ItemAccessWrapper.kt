@@ -27,4 +27,7 @@ interface ItemAccessWrapper<T> {
             createItem(itemId, itemAmount - other.itemAmount)
         else
             other
+
+    fun T.copy(itemId: Short = this.itemId, itemAmount: Int = this.itemAmount): T =
+            createItem(itemId, itemAmount)
 }
