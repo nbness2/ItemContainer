@@ -67,22 +67,22 @@ class Container<T>(
     private fun Int.orOnInvalid(other: Int): Int = if (this < 0) other else this
 
     /**
-     * Checks if the given item shares an item id with any other item in this [Container]
+     * Checks if the given element shares an element id with any other element in this [Container]
      *
-     * @param [item] The [T] you are checking is contained in [internalItems]
+     * @param [element] The [T] you are checking is contained in [internalItems]
      *
      * @return [Boolean]
      */
-    operator fun contains(item: T): Boolean = internalItems.any { it.sharesItemIdWith(item) }
+    override operator fun contains(element: T): Boolean = internalItems.any { it.sharesItemIdWith(element) }
 
     /**
      * Gets a [ContainerResult] for the given [slotIndex]
      *
-     * @param [slotIndex] The index of the slot you are attempting to get from
+     * @param [slotIndex] The index of the slot you are attempting to getFromSlot from
      *
      * @return [Success.GetItem<T>] or [Failure.BadIndex]
      */
-    operator fun get(slotIndex: Int): ContainerResult {
+    fun getFromSlot(slotIndex: Int): ContainerResult {
         return if (isValidSlot(slotIndex))
             Success.GetItem(unsafe[slotIndex])
         else
@@ -122,7 +122,7 @@ class Container<T>(
      * @return [Success.VerifyItem], [Failure.BadIndex] or [Failure.ItemIdMismatch]
      */
     inline fun verify(itemToVerify: T, slotIndex: Int, verificationCondition: (comparedItem: T) -> Boolean): ContainerResult =
-        this[slotIndex]
+        this.getFromSlot(slotIndex)
             .onSuccessType<Success.GetItem<T>> {
                 return if (verificationCondition(containedItem)) {
                     Success.VerifyItem(itemToVerify)
@@ -240,7 +240,7 @@ class Container<T>(
      */
     fun findSlotForAtLeast(itemToFind: T): ContainerResult {
         val foundSlot = internalItems.indexOfFirst { itemToFind.sharesItemIdWith(it) }
-        return this[foundSlot]
+        return this.getFromSlot(foundSlot)
             .onFailure { return Failure.ItemNotFound(itemToFind) }
             .onSuccessType<Success.GetItem<T>> {
                 containedItem
@@ -252,7 +252,7 @@ class Container<T>(
 
     fun findSlotForAtLeast(itemIdToFind: Short, itemAmountToFind: Int): ContainerResult {
         val foundSlot = internalItems.indexOfFirst { it.itemId == itemIdToFind }
-        return this[foundSlot]
+        return this.getFromSlot(foundSlot)
             .onFailure { return Failure.ItemNotFound(createItem(itemIdToFind, itemAmountToFind)) }
             .onSuccessType<Success.GetItem<T>> {
                 containedItem
@@ -288,7 +288,7 @@ class Container<T>(
      * @return [Success.FullTakeItem] or [Failure.BadIndex]
      */
     fun takeFromSlot(slotIndex: Int): ContainerResult =
-        this[slotIndex]
+        this.getFromSlot(slotIndex)
             .onSuccessType<Success.GetItem<T>> {
                 internalItems[slotIndex] = INVALID_ITEM
                 return Success.FullTakeItem(containedItem) }
@@ -306,7 +306,7 @@ class Container<T>(
     fun takeFromSlot(slotIndex: Int, itemToTake: T): ContainerResult =
         verifyAtLeast(itemToTake, slotIndex)
             .onSuccessType<Success.VerifyItem<T>> {
-                return get(slotIndex)
+                return getFromSlot(slotIndex)
                     .onSuccessType<Success.GetItem<T>> {
                         internalItems[slotIndex] = containedItem - itemToTake
                         return Success.FullTakeItem(itemToTake) } }
