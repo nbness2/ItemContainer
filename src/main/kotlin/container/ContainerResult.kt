@@ -1,7 +1,4 @@
-package nbness.Container
-
-import nbness.Item.*
-
+package container
 
 /**
  * @author: nbness2 <nbness1337@gmail.com>
@@ -11,24 +8,24 @@ import nbness.Item.*
 sealed class ContainerResult {
 
     internal interface ContainsIndex { val index: Int }
-    internal interface ContainsItem { val containedItem: BaseItem }
-    internal interface ContainsLeftoverItem { val leftoverItem: BaseItem }
-    internal interface ContainsFoundItem { val foundItem: BaseItem }
+    internal interface ContainsItem<T> { val containedItem: T }
+    internal interface ContainsLeftoverItem<T> { val leftoverItem: T }
+    internal interface ContainsFoundItem<T> { val foundItem: T }
 
     /**
      * Signifies a successful [Container] operation
      */
     sealed class Success : ContainerResult() {
         override fun toString(): String = "Success.${this::class.simpleName}"
-        class GetItem(override val containedItem: BaseItem) : Success(), ContainsItem
+        class GetItem<T>(override val containedItem: T) : Success(), ContainsItem<T>
         object SetItem : Success()
         object FullAddItem : Success()
-        class PartialAddItem(override val leftoverItem: BaseItem) : Success(), ContainsLeftoverItem
-        class VerifyItem(override val containedItem: BaseItem) : Success(), ContainsItem
+        class PartialAddItem<T>(override val leftoverItem: T) : Success(), ContainsLeftoverItem<T>
+        class VerifyItem<T>(override val containedItem: T) : Success(), ContainsItem<T>
         object SwapItem : Success()
         class FindSlot(override val index: Int) : Success(), ContainsIndex
-        class FullTakeItem(override val containedItem: BaseItem) : Success(), ContainsItem
-        class PartialTakeItem(override val containedItem: BaseItem, override val leftoverItem: BaseItem) : Success(), ContainsItem, ContainsLeftoverItem {
+        class FullTakeItem<T>(override val containedItem: T) : Success(), ContainsItem<T>
+        class PartialTakeItem<T>(override val containedItem: T, override val leftoverItem: T) : Success(), ContainsItem<T>, ContainsLeftoverItem<T> {
             override fun toString(): String = "Success.PartialTakeItem($containedItem, $leftoverItem)"
         }
     }
@@ -39,15 +36,15 @@ sealed class ContainerResult {
     sealed class Failure : ContainerResult() {
         override fun toString(): String = "Failure.${this::class.simpleName}"
         class BadIndex(override val index: Int) : Failure(), ContainsIndex
-        class AddBadIndex(override val index: Int, override val containedItem: BaseItem) : Failure(), ContainsIndex, ContainsItem
+        class AddBadIndex<T>(override val index: Int, override val containedItem: T) : Failure(), ContainsIndex, ContainsItem<T>
         class BadFromIndex(override val index: Int) : Failure(), ContainsIndex
         class BadToIndex(override val index: Int) : Failure(), ContainsIndex
         class SameToFromIndex(override val index: Int) : Failure(), ContainsIndex
         class SlotOccupied(override val index: Int) : Failure(), ContainsIndex
-        class AddSlotOccupied(override val index: Int, override val containedItem: BaseItem) : Failure(), ContainsIndex, ContainsItem
-        class ItemIdMismatch(override val containedItem: BaseItem, override val foundItem: BaseItem) : Failure(), ContainsItem, ContainsFoundItem
-        class ContainerFull(override val containedItem: BaseItem) : Failure(), ContainsItem
-        class ItemNotFound(override val containedItem: BaseItem) : Failure(), ContainsItem
+        class AddSlotOccupied<T>(override val index: Int, override val containedItem: T) : Failure(), ContainsIndex, ContainsItem<T>
+        class ItemIdMismatch<T>(override val containedItem: T, override val foundItem: T) : Failure(), ContainsItem<T>, ContainsFoundItem<T>
+        class ContainerFull<T>(override val containedItem: T) : Failure(), ContainsItem<T>
+        class ItemNotFound<T>(override val containedItem: T) : Failure(), ContainsItem<T>
         object NoFreeSlots : Failure()
         object InvalidItemAddition : Failure()
         object NotEnoughItemAmount : Failure()
