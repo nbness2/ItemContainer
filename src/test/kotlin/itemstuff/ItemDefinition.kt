@@ -1,4 +1,4 @@
-package nbness.Item
+package itemstuff
 
 /**
  * Mock ItemDefinition class
