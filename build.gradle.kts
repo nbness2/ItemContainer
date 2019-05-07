@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.dokka") version "0.9.17"
 }
 
-group = "nbness"
+group = "rspsUtil"
 version = "1.14"
 
 repositories {
